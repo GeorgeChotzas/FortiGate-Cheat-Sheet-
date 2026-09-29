@@ -1,0 +1,44 @@
+diag debug crashlog read
+diag hard sys conserve
+diag ips session status
+
+config system dns
+set dns-cache-limit 1800
+end
+
+config system fortiguard
+set webfilter-cache-ttl 1800
+set antispam-cache-ttl 900
+end
+
+config system autoupdate schedule
+set frequency daily
+set time 03:00
+end
+
+config ips global
+set engine-count 1
+set cp-accel-mode none
+set exclude-signatures none
+end
+
+
+
+config system global
+set memory-use-threshold-extreme 97
+set memory-use-threshold-green 95
+set memory-use-threshold-red 96
+set security-rating-result-submission disable
+set security-rating-run-on-schedule disable
+set tcp-halfclose-timer 30
+set tcp-halfopen-timer 5
+set tcp-timewait-timer 0
+set udp-idle-timer 60
+set miglogd-children 1
+set sslvpn-max-worker-count 1
+set wad-worker-count 1
+set scanunit-count 2
+set internet-service-database on-demand
+end
+
+execute update-ffdb-on-demand 
