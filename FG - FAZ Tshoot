@@ -1,0 +1,7 @@
+get log fortianalyzer setting 
+get log fortianalyzer filter
+exec log fortianalyzer test-connectivity
+
+config log fortianalyzer
+exec telnet <IP of Fortianalyzer> 514
+diagnose sniffer packet any 'port 514' 4
