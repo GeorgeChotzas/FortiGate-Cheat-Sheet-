@@ -1,5 +1,5 @@
 diag debug crashlog read
-diag hard sys conserve
+diagnose hardware sysinfo conserve
 diag ips session status
 
 config system dns
