@@ -1,0 +1,132 @@
+FW
+execute switch-controller get-conn-status 
+execute switch-controller diagnose-connection
+execute switch-controller get-physical-conn standard 
+diagnose switch-controller switch-info mclag peer-consistency-check
+
+
+config switch-controller switch-profile
+edit default
+set login-passwd-override enable
+set login-passwd ***
+end
+
+FSW
+
+diag debug crashlog read
+TAC Report: diagnose debug report 
+
+System/Hardware
+execute time
+get system status
+execute switch-controller get-conn-status
+diagnose sys ntp status
+get system arp
+get system performance status
+get hardware status
+get hardware cpu
+get hardware memory
+diagnose hardware sysinfo shm
+diagnose sys fan status
+diagnose sys pcb temp
+diagnose sys psu status
+diagnose sys flash list
+
+Physical ports/ Transceivers
+
+diagnose switch physical-ports summary
+diagnose switch physical-ports stats list
+diagnose switch physical-ports list
+diagnose switch physical-ports port-stats list 
+diagnose switch physical-ports linerate
+diagnose switch physical-ports io-stats list
+diagnose switch physical-ports port-block status
+diagnose netlink bridge list
+diagnose switch vlan list
+
+PoE
+
+get switch poe inline
+diagnose switch poe status portX
+get hardware status
+execute poe-reset portX
+
+
+LLDP
+
+get switch lldp neighbors-summary
+get switch lldp neighbors-detail
+get switch lldp auto-isl-status
+get switch lldp stats
+get switch lldp profile
+get switch lldp settings
+
+STP
+
+get switch stp settings
+diagnose stp instance list
+diagnose stp mst-config list
+
+Interfaces, trunks and MCLAG
+
+get switch interface
+diagnose switch trunk summary
+diagnose switch trunk list
+diagnose switch mclag icl
+diagnose switch mclag list
+diagnose switch mclag peer-consistency-check
+get switch storm-control
+
+Configuration, logs and crashlog
+
+execute log filter view-lines 5000
+execute log filter start-line 1
+execute log display
+
+IGMP / MLD snooping, sFlow
+
+get switch igmp-snooping group
+get switch igmp-snooping globals
+get switch igmp-snooping status
+get switch igmp-snooping static
+get switch mld-snooping globals
+get switch mld-snooping group
+get switch mld-snooping status
+get switch mld-snooping static-group
+get system sflow
+
+DHCP snooping, 802.1X, security
+
+get switch dhcp-snooping status
+get switch dhcp-snooping database
+diagnose switch 802-1x status
+diagnose switch vlan assignment mac list
+diagnose switch 802-1x status-dacl
+diagnose switch pdu-counters list
+diagnose switch arp-inspection stats
+
+diagnose switch pdu-counters list
+diagnose stp instance list
+
+
+VXLAN and mirroring
+
+get system vxlan
+diagnose test application vxland 1 … 7
+diagnose switch vxlan mac-address list
+diagnose switch vxlan mac-address
+diagnose switch vxlan arp-nd-cache
+diagnose switch vxlan vp-info
+diagnose hardware switchinfo vxlan-ip-nhop-table
+diagnose hardware switchinfo vxlan-tunnel-init
+diagnose hardware switchinfo vxlan-tunnel-term
+diagnose hardware switchinfo vxlan-vpn-vp
+diagnose switch mirror auto-config status
+diagnose switch mirror hardware status
+diagnose sys link-monitor status
+
+
+
+Pre v7
+conf sys global
+set switch-mgmt-mode fortilink
