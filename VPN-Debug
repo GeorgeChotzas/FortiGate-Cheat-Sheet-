@@ -1,0 +1,27 @@
+Phase 1 checks
+
+diagnose vpn ike gateway list 
+diag vpn tunnel list
+
+before 7.4.1
+diag debug reset
+diagnose vpn ike log filter clear                    
+diag vpn ike log filter dst-addr4 195.46.1.66
+diag debug console timestamp enable
+diagnose debug application eap_proxy -1
+diag debug application ike -1       
+diag debug enable 
+
+
+After 7.4.2
+diag debug reset
+diagnose vpn ike log filter clear                    
+diag vpn ike log filter rem-addr4 195.46.1.66
+diag debug console timestamp enable
+diagnose debug application eap_proxy -1
+diag debug application ike -1       
+diag debug enable
+
+diag debug disable
+
+
