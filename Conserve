@@ -1,6 +1,7 @@
 diag debug crashlog read
 diagnose hardware sysinfo conserve
 diag ips session status
+diag sys ha history read
 
 config system dns
 set dns-cache-limit 1800
