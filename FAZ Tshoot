@@ -1,6 +1,11 @@
+FortiGate
+
+execute log fortianalyzer test-connectivity
 get log fortianalyzer setting 
 get log fortianalyzer filter
 exec log fortianalyzer test-connectivity
+
+
 
 config log fortianalyzer
 exec telnet <IP of Fortianalyzer> 514
