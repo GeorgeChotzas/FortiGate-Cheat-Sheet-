@@ -1,132 +1,141 @@
-FW
-execute switch-controller get-conn-status 
-execute switch-controller diagnose-connection
-execute switch-controller get-physical-conn standard 
-diagnose switch-controller switch-info mclag peer-consistency-check
+### FortiGate ###
 
+execute switch-controller get-conn-status                          # Managed switches: status, version, serial
+execute switch-controller diagnose-connection                      # FortiLink health check (CAPWAP, DHCP, LLDP, auth)
+execute switch-controller get-physical-conn standard <fortilink>   # Physical topology of switches on a FortiLink
+diagnose switch-controller switch-info mclag peer-consistency-check   # Check MC-LAG config consistency between peers
+diagnose switch-controller switch-info mac-table <switch>          # MAC table of a managed switch
+execute switch-controller get-upgrade-status                       # Firmware upgrade progress for managed switches
 
+# Override local admin password on managed switches
 config switch-controller switch-profile
 edit default
 set login-passwd-override enable
 set login-passwd ***
 end
 
-FSW
 
-diag debug crashlog read
-TAC Report: diagnose debug report 
+### FSW - Crashlog / TAC ###
 
-System/Hardware
-execute time
-get system status
-execute switch-controller get-conn-status
-diagnose sys ntp status
-get system arp
-get system performance status
-get hardware status
-get hardware cpu
-get hardware memory
-diagnose hardware sysinfo shm
-diagnose sys fan status
-diagnose sys pcb temp
-diagnose sys psu status
-diagnose sys flash list
-
-Physical ports/ Transceivers
-
-diagnose switch physical-ports summary
-diagnose switch physical-ports stats list
-diagnose switch physical-ports list
-diagnose switch physical-ports port-stats list 
-diagnose switch physical-ports linerate
-diagnose switch physical-ports io-stats list
-diagnose switch physical-ports port-block status
-diagnose netlink bridge list
-diagnose switch vlan list
-
-PoE
-
-get switch poe inline
-diagnose switch poe status portX
-get hardware status
-execute poe-reset portX
+diagnose debug crashlog read      # Daemon crash history
+diagnose debug report             # Full output for TAC
 
 
-LLDP
+### FSW - System / Hardware ###
 
-get switch lldp neighbors-summary
-get switch lldp neighbors-detail
-get switch lldp auto-isl-status
-get switch lldp stats
-get switch lldp profile
-get switch lldp settings
-
-STP
-
-get switch stp settings
-diagnose stp instance list
-diagnose stp mst-config list
-
-Interfaces, trunks and MCLAG
-
-get switch interface
-diagnose switch trunk summary
-diagnose switch trunk list
-diagnose switch mclag icl
-diagnose switch mclag list
-diagnose switch mclag peer-consistency-check
-get switch storm-control
-
-Configuration, logs and crashlog
-
-execute log filter view-lines 5000
-execute log filter start-line 1
-execute log display
-
-IGMP / MLD snooping, sFlow
-
-get switch igmp-snooping group
-get switch igmp-snooping globals
-get switch igmp-snooping status
-get switch igmp-snooping static
-get switch mld-snooping globals
-get switch mld-snooping group
-get switch mld-snooping status
-get switch mld-snooping static-group
-get system sflow
-
-DHCP snooping, 802.1X, security
-
-get switch dhcp-snooping status
-get switch dhcp-snooping database
-diagnose switch 802-1x status
-diagnose switch vlan assignment mac list
-diagnose switch 802-1x status-dacl
-diagnose switch pdu-counters list
-diagnose switch arp-inspection stats
-
-diagnose switch pdu-counters list
-diagnose stp instance list
+execute time                      # Current time on the switch
+get system status                 # Firmware, serial, hostname, uptime
+diagnose sys ntp status           # NTP sync status
+get system arp                    # ARP table
+get system performance status     # CPU, memory, uptime
+get hardware status               # Model, ASIC, ports, PoE budget
+get hardware cpu                  # CPU details
+get hardware memory               # Memory details
+diagnose hardware sysinfo shm     # Shared memory / conserve mode info
+diagnose sys fan status           # Fan status
+diagnose sys pcb temp             # Board temperature sensors
+diagnose sys psu status           # Power supply status
+diagnose sys flash list           # Firmware images on flash
 
 
-VXLAN and mirroring
+### FSW - Physical Ports / Transceivers ###
 
-get system vxlan
-diagnose test application vxland 1 … 7
-diagnose switch vxlan mac-address list
-diagnose switch vxlan mac-address
-diagnose switch vxlan arp-nd-cache
-diagnose switch vxlan vp-info
-diagnose hardware switchinfo vxlan-ip-nhop-table
-diagnose hardware switchinfo vxlan-tunnel-init
-diagnose hardware switchinfo vxlan-tunnel-term
-diagnose hardware switchinfo vxlan-vpn-vp
-diagnose switch mirror auto-config status
-diagnose switch mirror hardware status
-diagnose sys link-monitor status
+diagnose switch physical-ports summary          # Port status, speed, duplex
+diagnose switch physical-ports stats list       # Port counters (errors, drops)
+diagnose switch physical-ports list             # Detailed port info
+diagnose switch physical-ports port-stats list  # Per-port traffic stats
+diagnose switch physical-ports linerate         # Live port throughput
+diagnose switch physical-ports io-stats list    # Port I/O stats
+diagnose switch physical-ports port-block status # Blocked ports (loop guard, etc.)
+diagnose switch mac-address list                # MAC address table
+diagnose netlink bridge list                    # Kernel bridge table
+diagnose switch vlan list                       # VLANs and member ports
 
 
+### FSW - PoE ###
 
-Pre v7
-conf sys global
-set switch-mgmt-mode fortilink
+get switch poe inline             # PoE power per port and total budget
+diagnose switch poe status portX  # PoE details for one port
+execute poe-reset portX           # Power-cycle PoE on a port
+
+
+### FSW - LLDP ###
+
+get switch lldp neighbors-summary   # LLDP neighbors overview
+get switch lldp neighbors-detail    # Full neighbor details
+get switch lldp auto-isl-status     # Auto-ISL detection status
+get switch lldp stats               # LLDP packet counters
+get switch lldp profile             # LLDP profiles
+get switch lldp settings            # Global LLDP settings
+
+
+### FSW - STP ###
+
+get switch stp settings           # Global STP config
+diagnose stp instance list        # STP state per instance/port (root, blocking)
+diagnose stp mst-config list      # MST region config
+
+
+### FSW - Interfaces, Trunks and MC-LAG ###
+
+get switch interface                        # Switch interface config
+diagnose switch trunk summary               # Trunk/LAG status overview
+diagnose switch trunk list                  # Trunk/LAG member details
+diagnose switch mclag icl                   # MC-LAG ICL status
+diagnose switch mclag list                  # MC-LAG trunks and peer status
+diagnose switch mclag peer-consistency-check # Config consistency with MC-LAG peer
+get switch storm-control                    # Storm control settings
+
+
+### FSW - Logs ###
+
+execute log filter view-lines 5000   # Lines to display
+execute log filter start-line 1      # Start from first line
+execute log display                  # Show logs
+
+
+### FSW - IGMP / MLD Snooping, sFlow ###
+
+get switch igmp-snooping group        # IGMP groups learned
+get switch igmp-snooping globals      # IGMP snooping global settings
+get switch igmp-snooping status       # IGMP snooping status per VLAN
+get switch igmp-snooping static       # Static IGMP groups
+get switch mld-snooping globals       # MLD snooping global settings
+get switch mld-snooping group         # MLD groups learned
+get switch mld-snooping status        # MLD snooping status
+get switch mld-snooping static-group  # Static MLD groups
+get system sflow                      # sFlow collector config
+
+
+### FSW - DHCP Snooping, 802.1X, Security ###
+
+get switch dhcp-snooping status             # DHCP snooping status
+get switch dhcp-snooping database           # DHCP snooping bindings
+diagnose switch 802-1x status               # 802.1X auth status per port
+diagnose switch 802-1x status-dacl          # Downloadable ACLs applied
+diagnose switch vlan assignment mac list    # Dynamic VLAN assignment per MAC
+diagnose switch pdu-counters list           # Control-plane packet counters (STP, LLDP, LACP)
+diagnose switch arp-inspection stats        # Dynamic ARP inspection stats
+
+
+### FSW - VXLAN and Mirroring ###
+
+get system vxlan                                   # VXLAN config
+diagnose test application vxland 1..7              # VXLAN daemon stats
+diagnose switch vxlan mac-address list             # MACs learned over VXLAN
+diagnose switch vxlan arp-nd-cache                 # VXLAN ARP/ND cache
+diagnose switch vxlan vp-info                      # VXLAN virtual ports
+diagnose hardware switchinfo vxlan-ip-nhop-table   # Hardware next-hop table
+diagnose hardware switchinfo vxlan-tunnel-init     # Hardware tunnel initiators
+diagnose hardware switchinfo vxlan-tunnel-term     # Hardware tunnel terminators
+diagnose hardware switchinfo vxlan-vpn-vp          # Hardware VPN virtual ports
+diagnose switch mirror auto-config status          # Auto mirror status
+diagnose switch mirror hardware status             # Hardware mirror sessions
+diagnose sys link-monitor status                   # Link monitor status
+
+
+### FSW - Pre v7 (set FortiLink mode) ###
+
+config system global
+set switch-mgmt-mode fortilink   # Switch to FortiLink managed mode
+end
