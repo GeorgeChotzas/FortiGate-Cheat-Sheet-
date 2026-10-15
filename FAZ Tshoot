@@ -1,69 +1,79 @@
-FortiGate
+### FortiGate ###
 
-get log fortianalyzer setting 
-get log fortianalyzer filter
-exec log fortianalyzer test-connectivity
-
-
-
-exec telnet <IP of Fortianalyzer> 514
-diagnose sniffer packet any 'port 514' 4
+get log fortianalyzer setting              # FAZ logging config (IP, status, encryption)
+get log fortianalyzer filter               # Which log types are sent to FAZ
+exec log fortianalyzer test-connectivity   # Registration, connection, and quota status with FAZ
+exec telnet <FAZ IP> 514                   # Test TCP 514 reachability to FAZ
+diagnose sniffer packet any 'port 514' 4   # Check log traffic leaving the FortiGate
+diagnose test application fgtlogd 1        # FAZ logging daemon stats, queued/failed logs (FOS 7.x)
 
 
-FAZ
+### FAZ - General Health ###
 
-get sys status
-get sys performance
-diagnose log device
-diagnose system print cpuinfo
-diagnose hardware info
-diagnose system print df
-exe lvm info
-diagnose system print netstat
-diagnose system print route
-
-diagnose test application oftpd 3
-diagnose fmnetwork arp list
-
-General Health
-
-get sys status : Get general information: firmware version, serial number, ADOMs enabled or not, time and time zone, general license status (Valid or not).
-get sys performance Detailed performance statistics: CPU load, memory usage, hard disk/flash disk used space and input/output (iostat) statistics.
-exe top : Display real time list of running processes with their CPU load.
-diag log device :Shows how much space is used by each device logging to the Fortianalyzer, including quotas.
-exe iotop -b -n 1 Display and update every 1 second READ/WRITE statistics for all the processes.
-diagnose system print cpuinfo Display hardware CPU information - vendor, number of CPUs etc.
-diagnose hardware info Even more hardware-related info.
-diagnose system print df : Show disk partitions and space used. Analog of the Linux df. exe lvm info Shows disks status and size
-diagnose system print loadavg : Show average system load, analog to the Linux uptime command.
-diagnose system print netstat : Show established connections to the Fortianalyzer, as well as listening ports. Every logging device can (and usually does) have multiple connections established.
-diagnose system print route : Show routing table of the Fortianalyzer.
-
-Communication debug
-
-diagnose test application oftpd 3 List all devices sending logs to the Fortianalyzer with their IP addresses, serial numbers, uptime meaning connection establishment uptime, not remote device uptime, and packets received (should be growing).
-diagnose debug application oftpd 8 <Device name> 
-diagnose debug enable : Real time debug of communicating with the Device name device.
-
-diagnose sniffer packet any "host IP of remote device" : Sniff packets from/to remote device, to make sure they are sending each other packets. The communication is encrypted.
-diagnose sniffer packet any "port 514" : Sniff all packets to/from port 514 used by Fortianalyzer to receive logs from remote devices.
+get sys status                     # Firmware, serial, ADOM mode, time, HA, license status
+get sys performance                # CPU, memory, disk usage, and I/O stats
+exe top                            # Live process list with CPU load
+exe iotop -b -n 1                  # Disk read/write per process
+diagnose log device                # Disk space and quota used per device/ADOM
+diagnose system print cpuinfo      # CPU hardware info
+diagnose hardware info             # Detailed hardware info
+diagnose system print df           # Disk partitions and usage
+diagnose system print df -h        # Same, human-readable sizes
+exe lvm info                       # Disk/LVM status and size
+diagnose system print loadavg      # System load average
+diagnose system print netstat      # Established connections and listening ports
+diagnose system print route        # Routing table
+diagnose fmnetwork interface list  # Interface IPs and RX/TX counters
+diagnose fmnetwork arp list        # ARP table
 
 
-Logs from devices
+### FAZ - Communication Debug ###
 
-diagnose test application oftpd 50 : Show log types received and stored for each device.
-diag log device : Shows how much space is used by each device logging to the Fortianalyzer, including quotas.
-diagnose fortilogd lograte : Show in one line last 5/30/60 seconds rate of receiving logs.
-diagnose fortilogd lograte-adom all : Show as table log receiving rates for all ADOMs aggregated per device type (i.e. rate for all Fortigates will be as one data per ADOM).
-diagnose fortilogd lograte-device : Show average logs receive rate per device for the last hour, day, and week.
-diagnose fortilogd lograte-total : Show summary log receive rate for all devices on this Fortianalyzer.
-
-Licensing
-
-diagnose dvm device list : Look for the line There are currently N devices/vdoms count for license.
-diagnose debug vminfo : Show report on Virtual Machine license: whether valid or not, type, licensed storage volume, licensed log receive rate, licensed maximum device count
-diagnose license list : List all applied licenses on this FAZ.
-get system loglimits : Show system limits in accepting logs
+diagnose test application oftpd 3                 # Connected devices: IP, serial, uptime, packets
+diagnose debug reset                              # Clear previous debug settings
+diagnose debug application oftpd 8 <Device name>  # Debug OFTP for one device
+diagnose debug enable                             # Start debug output
+diagnose debug disable                            # Stop debug output
+diagnose debug reset                              # Clear debug settings when done
+diagnose sniffer packet any "host <device IP>"    # Capture traffic to/from a device
+diagnose sniffer packet any "port 514"            # Capture log traffic (OFTP TCP / syslog UDP 514)
 
 
+### FAZ - Logs from Devices ###
 
+diagnose test application oftpd 50     # Log types received per device
+diagnose log device                    # Space used per device/ADOM, incl. quotas
+diagnose fortilogd lograte             # Log rate for last 5/30/60 sec
+diagnose fortilogd lograte-adom all    # Log rate per ADOM and device type
+diagnose fortilogd lograte-device      # Avg log rate per device (hour/day/week)
+diagnose fortilogd lograte-total       # Total log rate for all devices
+diagnose fortilogd msgrate             # Message rate received
+diagnose sql status rebuild-db         # Check whether a DB rebuild is running
+
+
+### FAZ - Licensing ###
+
+diagnose dvm device list    # Devices registered, incl. license device/VDOM count
+diagnose debug vminfo       # VM license: valid, type, GB/day, max devices
+diagnose license list       # All applied licenses and expiry
+get system loglimits        # Licensed GB/day and log rate limits
+
+
+### FAZ - Shell Access ###
+
+config system admin setting
+set shell-access enable     # Enable Linux shell (asks for password)
+end
+execute shell               # Enter the shell
+
+
+### FAZ - Extra ###
+
+diagnose dvm adom list                  # ADOMs and their devices
+diagnose dvm device list <device name>  # Details for one device
+diagnose sql status run_sql_rebuild     # SQL rebuild progress
+diagnose sql process list               # Running SQL queries (slow reports/log view)
+diagnose cdb check adom-integrity       # ADOM database consistency check
+diagnose debug crashlog read            # Daemon crash logs
+diagnose system disk health             # Disk errors (hardware appliances)
+diagnose system ntp status              # NTP sync (wrong time = missing logs)
