@@ -1,13 +1,11 @@
 FortiGate
 
-execute log fortianalyzer test-connectivity
 get log fortianalyzer setting 
 get log fortianalyzer filter
 exec log fortianalyzer test-connectivity
 
 
 
-config log fortianalyzer
 exec telnet <IP of Fortianalyzer> 514
 diagnose sniffer packet any 'port 514' 4
 
@@ -69,14 +67,3 @@ get system loglimits : Show system limits in accepting logs
 
 
 
-diagnose test application oftpd 50 //  Show log types received and stored for each device.
-
-diag log device  // Shows how much space is used by each device logging to the Fortianalyzer, including quotas.
-
-diagnose fortilogd lograte  //  Show in one line last 5/30/60 seconds rate of receiving logs.
-
-diagnose fortilogd lograte-adom all  // Show as table log receiving rates for all ADOMs aggregated per device type (i.e. rate for all Fortigates will be as one data per ADOM).
-
-diagnose fortilogd lograte-device  // Show average logs receive rate per device for the last hour, day, and week.
-
-diagnose fortilogd lograte-total  // Show summary log receive rate for all devices on this Fortianalyzer.
