@@ -37,20 +37,20 @@ config vpn ipsec phase1-interface
         set peertype any
         set net-device disable
         set mode-cfg enable
-        set ipv4-dns-server1 172.10.10.150
-        set ipv4-dns-server2 172.10.10.151
+        set ipv4-dns-server1 8.8.8.8
+        set ipv4-dns-server2 1.1.1.1
         set proposal aes256-sha256
         set negotiate-timeout 300
         set dpd on-idle
-        set dhgrp 20 21 14
+        set dhgrp 20 14
         set eap enable
         set eap-identity send-request
         set reauth enable
         set idle-timeout enable
         set transport udp
         set assign-ip-from name
-        set ipv4-split-include "RA_vpn.rgoup"
-        set ipv4-name "SSLVPN_TUNNEL_ADDR1"
+        set ipv4-split-include "10.0.0.0/8"
+        set ipv4-name "Remote_VPN_range"
         set client-auto-negotiate enable
         set psksecret ENC wZpxTEOryzRbXJsRmnGDZ0NRDzlex4EsUAbdgfSt6NeuehfVS4NzX350aaFZBBTpxraXsqYB8Qun7gG0nBXzLMZr9Lq1J/bR9haKlpuOuCxx+18l/x6FKRpXyZwRhIkB/p5vHcpq+m3EpjRhvvG34SZNTong18C+vjNLxe7K7rltQOGPPbMXDFZfOY7f/xYO69Vuj1lmMjY3dkVA
         set dpd-retryinterval 60
@@ -62,6 +62,6 @@ config vpn ipsec phase2-interface
     edit "RA_VPN"
         set phase1name "RA_VPN"
         set proposal aes256-sha256
-        set dhgrp 20 21 14
+        set dhgrp 20 14
     next
 end
