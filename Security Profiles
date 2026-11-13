@@ -1,0 +1,111 @@
+AV
+
+config antivirus quarantine
+    set destination FortiAnalyzer
+end
+
+config antivirus settings
+    set machine-learning-detection enable
+end
+
+config antivirus profile
+    edit "FLOW"
+        set analytics-db enable
+        config http
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+        end
+        config ftp
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+        end
+        config imap
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+            set executables virus
+        end
+        config pop3
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+            set executables virus
+        end
+        config smtp
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+            set executables virus
+        end
+        config nntp
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+        end
+        config cifs
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+        end
+        set extended-log enable
+    next
+end
+
+
+
+config antivirus profile
+    edit "PROXY"
+        set feature-set proxy
+        set analytics-db enable
+        config http
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+        end
+        config ftp
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+        end
+        config imap
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+            set executables virus
+        end
+        config pop3
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+            set executables virus
+        end
+        config smtp
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+            set executables virus
+        end
+        config mapi
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+            set executables virus
+        end
+        config cifs
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+        end
+        config ssh
+            set av-scan block
+            set outbreak-prevention block
+            set quarantine enable
+        end
+        config content-disarm
+            set error-action block
+            set cover-page disable
+        end
+    next
+end
