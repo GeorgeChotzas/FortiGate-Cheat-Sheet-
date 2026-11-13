@@ -1,0 +1,76 @@
+config ips global
+    set database extended
+    set machine-learning-detection enable
+end
+
+config ips sensor
+    edit "CLIENT"
+        set block-malicious-url enable
+        set scan-botnet-connections block
+        config entries
+            edit 1
+                set location client
+                set severity medium high critical
+                set log-packet enable
+                set action block
+            next
+            edit 2
+                set location client
+                set severity low
+                set log-packet enable
+            next
+            edit 3
+                set location client
+                set severity medium high critical
+                set log-packet enable
+                set action block
+            next
+            edit 4
+                set location client
+                set severity low
+                set log-packet enable
+            next
+        end
+    next
+end
+
+config ips sensor
+    edit "SERVER"
+        set block-malicious-url enable
+        set scan-botnet-connections block
+        config entries
+            edit 1
+                set location server
+                set severity medium high critical
+                set log-packet enable
+                set action block
+            next
+            edit 2
+                set location server
+                set severity low
+                set log-packet enable
+            next
+        end
+    next
+end
+
+config ips sensor
+    edit "CLIENT-SERVER"
+        set block-malicious-url enable
+        set scan-botnet-connections block
+        config entries
+            edit 1
+                set location server client
+                set severity medium high critical
+                set log-packet enable
+                set action block
+            next
+            edit 2
+                set location server client
+                set severity low
+                set log-packet enable
+            next
+        end
+    next
+end
+
