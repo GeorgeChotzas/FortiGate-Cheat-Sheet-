@@ -1,0 +1,42 @@
+config application list
+    edit "APP"
+        set other-application-log enable
+        set unknown-application-log enable
+        config entries
+            edit 1
+                set category 2 6 8
+            next
+        end
+        set control-default-network-services enable
+        config default-network-services
+            edit 1
+                set port 25
+                set services smtp
+            next
+            edit 2
+                set port 22
+                set services ssh
+            next
+            edit 3
+                set port 53
+                set services dns
+            next
+            edit 4
+                set port 21
+                set services ftp
+            next
+            edit 5
+                set port 161
+                set services snmp
+            next
+            edit 6
+                set port 143
+                set services imap
+            next
+            edit 7
+                set port 110
+                set services pop3
+            next
+        end
+    next
+end
