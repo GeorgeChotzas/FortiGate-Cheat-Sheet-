@@ -54,6 +54,7 @@ diagnose switch vlan list
 
 ### FSW - PoE ###
 
+get hardware status
 get switch poe inline             
 diagnose switch poe status portX  
 execute poe-reset portX           
