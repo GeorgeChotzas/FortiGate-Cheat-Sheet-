@@ -532,13 +532,6 @@ diag wad dev query-by ipv4 <ip>                    # Endpoint info via WAD
 diag firewall dynamic list                         # ZTNA tags with IPs / MACs
 
 
-### Defaults ###
-
-# Login:   admin / no password
-# IP:      192.168.1.99 (port1 / internal / mgmt)
-# Console: 9600 8-N-1, no flow control
-
-
 ### CLI Basics ###
 
 tree                                               # All available commands
@@ -547,19 +540,6 @@ tree                                               # All available commands
 show [full-configuration] | grep -f <pattern>      # Filter config, keep context
 print tablesize                                    # Used vs max table sizes
 sudo <global|vdom> <diag|exec|show|get> ...        # Run global/VDOM command from anywhere
-
-
-### Admin Trusted Hosts ###
-
-config system admin
-    edit <admin>
-        set trusthost1 <mgmt_public_subnet>
-        set trusthost2 10.0.0.0/8
-        set trusthost3 172.16.0.0/12
-        set trusthost4 192.168.0.0/16
-    next
-end
-
 
 ### Factory Reset ###
 
@@ -643,12 +623,3 @@ diag traffictest run -c <iperf_server_ip>
 # TCP 8013, UDP 8014           FortiTelemetry
 # TCP/UDP 703                  HA sync
 # Ethertype 0x8890/91/93       HA heartbeat / sync
-
-
-### Useful Links ###
-
-# docs.fortinet.com          Docs, release notes
-# community.fortinet.com     KB, forum
-# www.fortiguard.com         FortiGuard
-# support.fortinet.com       Support portal
-# fndn.fortinet.net          Developer network
