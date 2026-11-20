@@ -31,28 +31,6 @@ config antivirus profile
     next
 end
 
-config antivirus profile
-    edit "PROXY"  
-        set analytics-db enable
-        config http
-            set fortisandbox monitor
-        end
-        config ftp
-            set fortisandbox monitor
-        end
-        config imap
-            set fortisandbox monitor
-        end
-        config pop3
-            set fortisandbox monitor
-        end
-        config smtp
-            set fortisandbox monitor
-        end
-    next
-end
-
-
 config webfilter profile
     edit "Flow"  
         config web
