@@ -1,7 +1,5 @@
 ##########################################################
-###   FortiGate CLI Cheat Sheet - FortiOS              ###
-###                                                    ###
-###   (v1.0, 10.11.2026)                               ###
+###   FortiGate CLI Cheat Sheet - FortiOS 8.0          ###
 ##########################################################
 
 
@@ -10,23 +8,103 @@
 get system status                                  # Firmware, serial, HA, VDOM, license info
 get system performance status                      # CPU, memory, sessions, uptime
 exec tac report                                    # Full diagnostic report for Fortinet TAC
+diag sys waninfo ipify                             # Show public IP of the FortiGate
 diag debug config-error-log read                   # Config errors after a firmware upgrade
 diag fdsm image-list                               # Firmware images available from FortiGuard
 diag fdsm image-upgrade-matrix                     # Supported upgrade path
-# Upgrade path tool:   https://docs.fortinet.com/upgrade-tool/fortigate
-# Firmware download:   https://support.fortinet.com/support/#/downloads/firmware
+Upgrade path tool:   https://docs.fortinet.com/upgrade-tool/fortigate
+Firmware download:   https://support.fortinet.com/support/#/downloads/firmware
 
 
-### System - Processes ###
+### Firmware Upgrade Checklist ###
+
+# 1) Pre-upgrade - save output to a file
+get system status
+get system performance status
+diag hardware deviceinfo disk
+get system interface
+diag netlink interface list
+diag ip address list
+get router info routing-table all
+get system ha status
+diag autoupdate versions
+diag vpn ike gateway list
+diag vpn tunnel list
+get vpn ipsec tunnel summary
+
+# 2) After every hop in the upgrade path
+get system status
+diag debug config-error-log read
+diag debug crashlog read
+
+# 3) Post-upgrade - run the same commands as step 1
+# 4) Diff pre-upgrade vs post-upgrade output
+
+
+### System - Processes & Memory ###
 
 diag sys top [sec] [number] [iterations]           # Live process list (P = sort CPU, M = sort memory, Ctrl+C to stop)
+diag sys top-summary                               # Process summary
+diag sys top-summary "-s mem"                      # Process summary sorted by memory
+diag sys process dump <pid>                        # Details of one process
+diag hardware sysinfo memory                       # Memory usage
+diag hardware sysinfo slab                         # Kernel slab memory
 diag debug crashlog read                           # Crash log
+
+
+### Conserve Mode ###
+
+diag debug crashlog read                           # Look for conserve / killed processes
+diag hardware sysinfo conserve                     # Conserve mode state and thresholds
+diag hardware sysinfo shm                          # Shared memory (conserve: 0=no, 1=proxy, 2=system, 3=both)
+diag ips session status                            # IPS session memory usage
+
+# Memory tuning for small / low-memory models - test first, adjust to the device
+config system dns
+    set dns-cache-limit 1800
+end
+
+config system fortiguard
+    set webfilter-cache-ttl 1800
+    set antispam-cache-ttl 900
+end
+
+config system autoupdate schedule
+    set frequency daily
+    set time 03:00
+end
+
+config ips global
+    set engine-count 1
+    set cp-accel-mode none
+    set exclude-signatures none
+end
+
+config system global
+    set memory-use-threshold-red 96
+    set memory-use-threshold-extreme 97
+    set memory-use-threshold-green 95
+    set security-rating-result-submission disable
+    set security-rating-run-on-schedule disable
+    set tcp-halfclose-timer 30
+    set tcp-halfopen-timer 5
+    set tcp-timewait-timer 0
+    set udp-idle-timer 60
+    set miglogd-children 1
+    set sslvpn-max-worker-count 1                  # Only if SSL-VPN still exists on the model/version
+    set wad-worker-count 1
+    set scanunit-count 2
+    set internet-service-database on-demand
+end
+
+exec update-ffdb-on-demand                         # Refresh ISDB after switching to on-demand
 
 
 ### System - Debugging Basics ###
 
 diag debug reset                                   # Clear all debug settings
 diag debug console timestamp enable                # Add timestamps to debug output
+diag debug application ?                           # List debuggable daemons
 diag debug application <app> <level>               # Real-time debug for a daemon
 diag test application <app> <test_level>           # Status info for a daemon
 diag debug cli 7                                   # Show GUI changes as CLI commands
@@ -34,9 +112,27 @@ diag debug enable                                  # Start debug output
 diag debug disable                                 # Stop debug output
 
 
+### Restart Services ###
+
+diag test application snmpd 99                     # SNMP
+diag test application http 99                      # HTTP daemon
+diag test application proxyworker 99               # Proxy worker
+diag test application urlfilter 99                 # URL filter
+diag test application wad 99                       # WAD (proxy / SSL inspection)
+diag test application scanunit 99                  # AV scan units
+diag test application ipsengine 99                 # IPS engine
+diag test application dnsproxy 99                  # DNS proxy
+diag test application dnsproxy 1                   # Clear DNS cache
+diag test application dnsproxy 4                   # Reload FQDN
+diag test application dnsproxy 9                   # Reload DNS DB
+diag wad stats clear                               # Clear WAD stats
+
+
 ### Sessions ###
 
-diag sys session filter <filter>                   # e.g. src, dst, sport, dport, proto
+diag sys session filter clear                      # Always clear old filter first
+diag sys session filter ?                          # Available filters
+diag sys session filter <filter>                   # e.g. src, dst, sport, dport, proto, policy
 diag sys session list [expect]                     # List all (or expected) sessions
 diag sys session clear                             # Clear all / filtered sessions
 diag sys session stat                              # Session & memory stats, drops, clashes
@@ -46,17 +142,28 @@ diag sys session exp-stat                          # Expectation session stats
 ### Packet Sniffer ###
 
 diag sniffer packet <if|any> '<filter>' <verbose> <count> <a|l>   # Verbose 1-6, 'a' = absolute timestamp
+diag sniffer packet any 'host <ip1> and host <ip2>' 4
+diag sniffer packet any 'host <peer_ip> and (port 500 or port 4500)' 4   # IKE / NAT-T traffic
 # GUI: Network > Diagnostics > Packet Capture
 
 
 ### Debug Flow ###
 
-diag debug flow filter <filter>                    # Narrow the trace (addr, saddr, daddr, port, proto)
+diag debug reset
+diag debug console timestamp enable
+diag debug flow filter saddr <src_ip>
+diag debug flow filter daddr <dst_ip>
 diag debug flow show iprope enable                 # Show policy lookup details
 diag debug flow show function-name enable          # Show function names
-diag debug flow trace start <count>                # Start trace
+diag debug flow trace start 100                    # Start trace (100 packets)
 diag debug enable
 # GUI: Network > Diagnostics > Debug Flow
+
+
+### Policy Lookup / iprope ###
+
+diag firewall iprope lookup <src> <sport> <dst> <dport> <proto> <src_intf>   # Which policy matches
+diag firewall iprope flush                         # Flush iprope table (for "iprope_in_check() check failed")
 
 
 ### Network - Interfaces ###
@@ -64,8 +171,10 @@ diag debug enable
 diag ip address list                               # IPs on FortiGate interfaces
 diag firewall iplist list                          # IPs used by VIPs
 diag firewall ippool list                          # IPs used by IP pools
-diag netlink interface list                        # Interfaces with MTU and device index
+diag netlink interface list                        # Interfaces with MTU, counters, device index
 get hardware nic <interface>                       # Physical interface details / errors
+diag hardware deviceinfo nic <interface>           # Same, detailed NIC counters
+fnsysctl ifconfig <interface>                      # Linux-style interface stats
 
 
 ### Network - Troubleshooting ###
@@ -91,7 +200,6 @@ get router info kernel                             # Forwarding table (FIB)
 diag firewall proute list                          # Policy routes (incl. SD-WAN rules)
 get router info protocols                          # Dynamic routing protocol overview
 exec router restart                                # Restart routing daemon
-diag sys link-monitor <status|interface|launch>    # Link monitor status
 get router info multicast table                    # Multicast routing table
 get router info multicast igmp groups              # IGMP groups
 
@@ -126,8 +234,10 @@ exec router clear ospf process                     # Restart OSPF
 get router info bfd neighbor                       # BFD neighbor status
 
 
-### SD-WAN ###
+### Link Monitor / SD-WAN ###
 
+diag sys link-monitor ?                            # Link monitor options
+diag sys link-monitor <status|interface|launch>    # Link monitor status
 diag sys sdwan member                              # SD-WAN member interfaces
 diag sys sdwan health-check [status|<name>]        # SLA / performance SLA state
 diag sys sdwan service [rule-id]                   # SD-WAN rule state and selected member
@@ -146,34 +256,88 @@ diag sys ha history read                           # Past HA events
 diag sys ha dump-by vcluster                       # Member uptimes
 diag sys ha reset-uptime                           # Reset uptime (forces re-election)
 exec ha failover set <cluster_id>                  # Trigger failover on primary
-exec ha ignore-hardware-revision <status|enable|disable>   # Allow different HW revisions
+exec ha ignore-hardware-revision <status|enable|disable>   # Allow different HW revisions / disk status
 diag debug application hatalk -1                   # Debug HA heartbeat
 diag debug application hasync -1                   # Debug HA sync
 diag sys ha checksum cluster                       # Config checksums of all members
 diag sys ha checksum recalculate                   # Recalculate checksums
 
+# Force HA re-sync (checksums out of sync)
+# Secondary:  exec ha sync stop
+# Primary:    exec ha sync stop
+#             exec ha sync start
+#             diag sys ha checksum recalculate
+# Secondary:  exec ha sync start
+
 
 ### IPsec VPN (IKEv1 / IKEv2) ###
 
-diag vpn ike log filter <filter>                   # e.g. rem-addr4 <ip>
-diag debug application ike -1                      # IKE negotiation debug (63 = less noise)
 diag vpn ike gateway list                          # Phase 1 details (also: get vpn ike gateway)
-diag vpn ike gateway flush name <name>             # Delete Phase 1 SA
 diag vpn tunnel list                               # Phase 2 details (also: get vpn ipsec tunnel details)
+get vpn ipsec tunnel summary                       # Tunnel summary
+diag vpn ike gateway flush name <name>             # Delete Phase 1 SA
+diag vpn ike gateway clear [name]                  # Clear IKE gateway(s)
 diag vpn tunnel flush <name>                       # Delete Phase 2 SA
 diag vpn tunnel <up|down> <name>                   # Bring tunnel up / down
+diag vpn ike config list                           # IKE config as loaded by iked
+diag vpn ike restart                               # Restart IKE daemon (drops all tunnels)
 diag vpn ike stats                                 # Tunnel statistics
 
+# IKE debug - FortiOS 7.4.2 and later
+diag debug reset
+diag vpn ike log filter clear
+diag vpn ike log filter rem-addr4 <peer_ip>
+diag debug console timestamp enable
+diag debug application ike -1
+diag debug application eap_proxy -1                # Add for EAP / dial-up users
+diag debug enable
+# Up to 7.4.1 the filter is:  diag vpn ike log filter dst-addr4 <peer_ip>
 
-### FortiGuard / Updates ###
+
+### Dial-up IPsec with SAML (Entra ID) ###
+
+diag debug reset
+diag vpn ike log filter clear
+diag vpn ike log filter rem-addr4 <client_public_ip>
+diag debug console timestamp enable
+diag debug application ike -1
+diag debug application eap_proxy -1
+diag debug application samld -1
+diag debug application fnbamd -1
+diag debug application authd -1
+diag debug enable
+
+
+### SSL VPN (versions/models that still have it) ###
+
+diag debug reset
+diag vpn ssl debug-filter src-addr4 <client_public_ip>
+diag debug application sslvpn -1
+diag debug application tvc -1
+diag debug console timestamp enable
+diag debug enable
+
+
+### FortiGuard / Updates / Registration ###
 
 # FDN FQDNs: *update.fortinet.net, *guardservice.fortinet.net, *update.fortiguard.net,
 #            *service.fortiguard.net, *securewf.fortiguard.net
+diag debug rating                                  # FortiGuard WF / AS server info
 diag autoupdate status                             # FortiGuard settings summary
 diag autoupdate versions                           # Engine / signature versions
 diag test update info                              # Update & license info
 diag debug application update -1                   # Update process debug
+diag debug enable
 exec update-now                                    # Force update
+
+# FortiGuard not reachable - disable anycast and use UDP 8888
+config system fortiguard
+    set fortiguard-anycast disable
+    set protocol udp
+    set port 8888
+    set sdns-server-ip 208.91.112.220 173.243.140.53 210.7.96.53
+end
+exec update-now
 
 
 ### Antivirus ###
@@ -186,6 +350,7 @@ diag antivirus test get scantime                   # Scan time stats
 
 diag ips anomaly list                              # DoS policy stats
 diag ips packet status                             # IPS packet stats
+diag ips session status                            # IPS session / memory stats
 diag test application ipsmonitor 2                 # Enable / disable IPS engine
 diag test application ipsmonitor 5                 # Toggle IPS bypass
 diag test application ipsmonitor 99                # Restart all IPS processes
@@ -193,7 +358,6 @@ diag test application ipsmonitor 99                # Restart all IPS processes
 
 ### Web Filter / Email Filter ###
 
-diag debug rating                                  # FortiGuard WF / AS server info
 diag webfilter fortiguard statistics list          # FortiGuard request stats
 diag webfilter fortiguard cache dump               # WF cache content
 diag test application urlfilter 1                  # List urlfilter test options
@@ -223,12 +387,18 @@ diag internet-service match <vdom> <ip> <netmask>       # Reverse ISDB lookup (I
 
 diag log test                                      # Generate test log messages
 diag test application miglogd 6                    # Log queue and failures
+diag sys logdisk usage                             # Log disk usage
+diag sys logdisk quota                             # Log disk quota per log type
+exec report flush-cache                            # Flush report cache
 
 
 ### Traffic Shaping ###
 
 diag firewall shaper traffic-shaper <list|stats>   # Shared shapers
 diag firewall shaper per-ip-shaper <list|stats>    # Per-IP shapers
+diag sys session filter policy <policy_id>         # Sessions hitting the shaped policy
+diag sys session list | grep -B 12 policy_id=<id>  # Show shaper info per session
+diag hardware deviceinfo nic <port>                # Check drops on the egress port
 
 
 ### SIP ###
@@ -238,15 +408,25 @@ diag sys sip-proxy stats list                      # SIP ALG stats
 diag sys sip-proxy calls <list|clear>              # Active SIP calls
 diag debug application sip -1                      # SIP debug
 
+# Use the SIP session helper instead of the SIP ALG (fixes many VoIP issues)
+config system settings
+    set sip-expectation disable
+    set sip-nat-trace disable
+    set default-voip-alg-mode kernel-helper-based
+end
+
 
 ### Authentication ###
 
 diag firewall auth filter <filter>                 # Filter auth list
 diag firewall auth list                            # Authenticated users
-diag test authserver <ldap|radius|...> <server> <user> <password>   # Test auth server
+diag firewall auth clear                           # Log out all firewall users
+diag test authserver ldap <server> <user> <password>   # Test LDAP
+diag test authserver radius <server> <pap|chap|mschap|mschap2> <user> <password>   # Test RADIUS
 diag debug application authd -1                    # Local auth debug
 diag debug application fnbamd -1                   # Remote auth debug (LDAP/RADIUS)
-diag debug application saml -1                     # SAML debug
+diag debug application radiusd -1                  # RADIUS accounting / RSSO debug
+diag debug application samld -1                    # SAML debug
 diag sys saml metadata                             # SAML metadata for admin access
 
 
@@ -261,6 +441,7 @@ exec fortitoken-mobile import 0000-0000-0000-0000-0000   # Recover trial tokens 
 
 ### FSSO ###
 
+diag debug authd fsso ?                            # All FSSO options
 diag debug authd fsso filter <filter>              # Filter FSSO user list
 diag debug authd fsso list                         # FSSO logged-on users
 diag debug authd fsso server-status                # Collector agent status
@@ -269,6 +450,11 @@ diag debug authd fsso <refresh-logon|refresh-groups>   # Ask collectors to resen
 diag debug application authd 8256                  # authd debug (FSSO)
 diag debug fsso-polling <option>                   # Agentless polling info
 diag debug application fssod -1                    # Agentless polling debug
+
+# On the Windows client
+# echo %logonserver%      -> which DC authenticated the user
+# whoami                  -> logged-on user
+# gpresult /r             -> user groups / applied GPOs
 
 
 ### Explicit Proxy (WAD) ###
@@ -323,6 +509,7 @@ diag switch-controller switch-info trunk           # Trunk info
 diag switch-controller switch-info mclag           # MC-LAG info
 exec switch-controller get-conn-status             # Switch connection status
 exec switch-controller diagnose-connection <switch>   # Connection diagnostics
+# FortiSwitch high memory: https://community.fortinet.com/t5/FortiSwitch/Troubleshooting-Tip-FortiSwitch-high-memory-usage/ta-p/323567
 
 
 ### FortiExtender ###
@@ -362,6 +549,18 @@ print tablesize                                    # Used vs max table sizes
 sudo <global|vdom> <diag|exec|show|get> ...        # Run global/VDOM command from anywhere
 
 
+### Admin Trusted Hosts ###
+
+config system admin
+    edit <admin>
+        set trusthost1 <mgmt_public_subnet>
+        set trusthost2 10.0.0.0/8
+        set trusthost3 172.16.0.0/12
+        set trusthost4 192.168.0.0/16
+    next
+end
+
+
 ### Factory Reset ###
 
 exec factoryreset                                  # Wipe whole config
@@ -375,9 +574,6 @@ exec factoryreset keepvmlicense                    # Keep VM license
 get hardware status                                # HW overview
 diag hardware test suite all                       # HQIP onboard hardware test
 diag hardware sysinfo cpu                          # CPU info
-diag hardware sysinfo memory                       # Memory usage
-diag hardware sysinfo shm                          # Shared memory usage
-diag hardware sysinfo conserve                     # Conserve mode details
 get system interface <physical|transceiver>        # Interface / SFP signal info
 diag npu np6 session-list                          # NP6 offloaded sessions
 diag npu np7 session-list                          # NP7 offloaded sessions
@@ -388,4 +584,71 @@ diag hardware npu np7 port-list                    # NP7 port mapping
 ### Hardware Acceleration (disable for troubleshooting) ###
 
 config firewall policy
-    edit
+    edit <id>
+        set auto-asic-offload disable              # No offload for this policy
+end
+
+config vpn ipsec phase1-interface
+    edit <p1-name>
+        set npu-offload disable                    # No offload for this tunnel
+end
+
+
+### Disk ###
+
+diag hardware deviceinfo disk                      # Disks and partitions
+exec disk scan <ref_int>                           # Check and repair disk
+exec disk format <ref_int>                         # Format partition/disk and reboot
+exec formatlogdisk                                 # Format log disk and reboot
+
+
+### Transparent Mode ###
+
+diag netlink brctl name list                       # Bridge list
+diag netlink brctl name host <bridge>              # Bridge MAC table
+
+
+### Certificates ###
+
+exec vpn certificate local generate <certificate-use>   # Regenerate default certs
+
+
+### Console Logging (300E / 400F / 900G and up) ###
+
+diag debug comlog <enable|disable>                 # Console logging on/off
+diag debug comlog <read|clear>                     # Read / clear console log
+diag debug comlog info                             # Console logging settings
+
+
+### Built-in iPerf ###
+
+diag traffictest server-intf <if>
+diag traffictest client-intf <if>
+diag traffictest port <port>
+diag traffictest run -c <iperf_server_ip>
+
+
+### Common FortiGate Ports ###
+
+# TCP 443, TCP/UDP 53, 8888    FortiGuard queries
+# TCP 443                      Contract validation, FortiToken, firmware
+# TCP 443, 8890                AV / IPS updates
+# UDP 500, ESP (IP 50)         IPsec
+# UDP 500, 4500                IPsec with NAT-T
+# TCP 514                      FortiManager / FortiAnalyzer
+# UDP 1812 / 1813              RADIUS auth / accounting
+# TCP/UDP 389, 636             LDAP / LDAPS
+# UDP 5246, 5247               CAPWAP
+# TCP 8000, 8001               FSSO
+# TCP 8013, UDP 8014           FortiTelemetry
+# TCP/UDP 703                  HA sync
+# Ethertype 0x8890/91/93       HA heartbeat / sync
+
+
+### Useful Links ###
+
+# docs.fortinet.com          Docs, release notes
+# community.fortinet.com     KB, forum
+# www.fortiguard.com         FortiGuard
+# support.fortinet.com       Support portal
+# fndn.fortinet.net          Developer network
