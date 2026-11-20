@@ -1,0 +1,62 @@
+config system global
+    set gui-fortigate-cloud-sandbox enable
+end
+
+execute forticloud-sandbox region
+0  Europe
+1  Global
+2  US
+3  Japan
+Please select cloud sandbox region[0-3]:0
+
+
+config antivirus profile
+    edit "FLOW"  
+        set analytics-db enable
+        config http
+            set fortisandbox monitor
+        end
+        config ftp
+            set fortisandbox monitor
+        end
+        config imap
+            set fortisandbox monitor
+        end
+        config pop3
+            set fortisandbox monitor
+        end
+        config smtp
+            set fortisandbox monitor
+        end
+    next
+end
+
+config antivirus profile
+    edit "PROXY"  
+        set analytics-db enable
+        config http
+            set fortisandbox monitor
+        end
+        config ftp
+            set fortisandbox monitor
+        end
+        config imap
+            set fortisandbox monitor
+        end
+        config pop3
+            set fortisandbox monitor
+        end
+        config smtp
+            set fortisandbox monitor
+        end
+    next
+end
+
+
+config webfilter profile
+    edit "Flow"  
+        config web
+            set blocklist enable
+        end
+    next
+end
