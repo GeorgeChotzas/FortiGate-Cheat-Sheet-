@@ -59,46 +59,6 @@ diag hardware sysinfo conserve                     # Conserve mode state and thr
 diag hardware sysinfo shm                          # Shared memory (conserve: 0=no, 1=proxy, 2=system, 3=both)
 diag ips session status                            # IPS session memory usage
 
-# Memory tuning for small / low-memory models - test first, adjust to the device
-config system dns
-    set dns-cache-limit 1800
-end
-
-config system fortiguard
-    set webfilter-cache-ttl 1800
-    set antispam-cache-ttl 900
-end
-
-config system autoupdate schedule
-    set frequency daily
-    set time 03:00
-end
-
-config ips global
-    set engine-count 1
-    set cp-accel-mode none
-    set exclude-signatures none
-end
-
-config system global
-    set memory-use-threshold-red 96
-    set memory-use-threshold-extreme 97
-    set memory-use-threshold-green 95
-    set security-rating-result-submission disable
-    set security-rating-run-on-schedule disable
-    set tcp-halfclose-timer 30
-    set tcp-halfopen-timer 5
-    set tcp-timewait-timer 0
-    set udp-idle-timer 60
-    set miglogd-children 1
-    set sslvpn-max-worker-count 1                  # Only if SSL-VPN still exists on the model/version
-    set wad-worker-count 1
-    set scanunit-count 2
-    set internet-service-database on-demand
-end
-
-exec update-ffdb-on-demand                         # Refresh ISDB after switching to on-demand
-
 
 ### System - Debugging Basics ###
 
