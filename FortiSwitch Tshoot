@@ -49,8 +49,13 @@ diagnose switch physical-ports io-stats list
 diagnose switch physical-ports port-block status 
 diagnose switch mac-address list                
 diagnose netlink bridge list                    
-diagnose switch vlan list                       
+diagnose switch vlan list 
 
+### Transceivers ###
+
+get switch modules summary
+get switch modules status
+get switch modules detail
 
 ### FSW - PoE ###
 
